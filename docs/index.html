@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tangis — Kenali Arti Tangisan Bayi</title>
+  <meta name="description" content="Rekam atau unggah suara tangisan bayi, lalu model CNN menebak apa yang sedang dirasakan si kecil. Berjalan sepenuhnya di browser.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M4 16h3l2-6 3 14 3-18 3 16 3-10 2 4h5%27 fill=%27none%27 stroke=%27%23ffb38a%27 stroke-width=%272.6%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+<main>
+  <nav class="nav" aria-label="Navigasi utama">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16h3l2-6 3 14 3-18 3 16 3-10 2 4h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Tangis
+    </a>
+    <div class="nav-links">
+      <a href="#analisis">Analisis</a>
+      <a href="#arti">Arti tangisan</a>
+      <a href="#cara">Cara kerja</a>
+    </div>
+    <span class="status" id="status" role="status"><i></i><b>Memuat model</b></span>
+  </nav>
+
+  <header class="hero" id="top">
+    <canvas class="hero-wave" id="heroWave" aria-hidden="true"></canvas>
+    <h1>Dengarkan apa yang sebenarnya ingin disampaikan si kecil.</h1>
+    <p class="lead">Rekam tangisan bayi selama beberapa detik atau unggah file suaranya. Model CNN yang dilatih pada ratusan rekaman tangisan menebak penyebabnya, langsung di browser Anda tanpa mengirim suara ke server.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#analisis" data-go="rec">Rekam tangisan</a>
+      <a class="btn btn-ghost" href="#analisis" data-go="file">Unggah file suara</a>
+    </div>
+  </header>
+
+  <section class="analyzer reveal" id="analisis" aria-labelledby="analisis-h">
+    <div class="panel input-panel">
+      <h2 id="analisis-h">Analisis suara</h2>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-rec" aria-selected="true" aria-controls="pane-rec">Rekam</button>
+        <button role="tab" id="tab-file" aria-selected="false" aria-controls="pane-file">Unggah file</button>
+      </div>
+
+      <div class="pane" id="pane-rec" role="tabpanel" aria-labelledby="tab-rec">
+        <canvas class="meter" id="meter" aria-hidden="true"></canvas>
+        <button class="rec-btn" id="recBtn" aria-pressed="false">
+          <span class="dot" aria-hidden="true"></span><span class="rec-label">Mulai merekam</span>
+        </button>
+        <p class="hint"><span id="timer">0,0</span> / 20 detik. Dekatkan ponsel ke bayi, idealnya 5 sampai 10 detik.</p>
+      </div>
+
+      <div class="pane" id="pane-file" role="tabpanel" aria-labelledby="tab-file" hidden>
+        <label class="drop" id="drop">
+          <input type="file" id="fileIn" accept="audio/*,.wav,.mp3,.ogg,.m4a,.webm,.flac">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <strong>Pilih atau seret file ke sini</strong>
+          <span>WAV, MP3, M4A, OGG, WEBM</span>
+        </label>
+      </div>
+
+      <audio id="player" controls hidden></audio>
+      <p class="error" id="error" role="alert" hidden></p>
+    </div>
+
+    <div class="panel result-panel" aria-live="polite">
+      <div class="empty" id="empty">
+        <div class="pulse" aria-hidden="true"></div>
+        <p>Hasil analisis akan muncul di sini.</p>
+      </div>
+      <div class="result" id="result" hidden>
+        <p class="eyebrow" id="resKind">Kemungkinan besar</p>
+        <h3 id="resLabel"></h3>
+        <div class="conf"><div class="conf-bar"><i id="confFill"></i></div><span id="confText"></span></div>
+        <p class="notice" id="notice" hidden></p>
+        <p class="desc" id="resDesc"></p>
+        <h4>Yang bisa dicoba</h4>
+        <ul class="tips" id="resTips"></ul>
+        <h4>Semua kemungkinan</h4>
+        <ol class="bars" id="bars"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="meanings" id="arti" aria-labelledby="arti-h">
+    <h2 class="reveal" id="arti-h">Sembilan hal yang bisa dikenali model</h2>
+    <div class="bento" id="bento"></div>
+  </section>
+
+  <section class="how" id="cara" aria-labelledby="cara-h">
+    <h2 id="cara-h" class="reveal">Cara kerjanya</h2>
+    <p class="scrub" id="scrub">Suara diubah menjadi mono 8 kHz, persis seperti data latih. Model lalu menghitung spektrogram log-mel, yaitu gambar energi suara per pita frekuensi dari waktu ke waktu. Empat lapis konvolusi membaca pola pada gambar itu, misalnya nada tinggi yang melengking atau tangisan berirama, lalu memberi peluang untuk tiap kemungkinan. Semua proses berjalan di perangkat Anda.</p>
+    <div class="steps">
+      <div class="step reveal"><b>1</b><h3>Rekam</h3><p>Mikrofon perangkat menangkap tangisan, tanpa peredam bising agar suaranya asli.</p></div>
+      <div class="step reveal"><b>2</b><h3>Ubah</h3><p>Audio di-resample ke 8 kHz dan diubah menjadi spektrogram log-mel 64 pita.</p></div>
+      <div class="step reveal"><b>3</b><h3>Tebak</h3><p>CNN memberi peluang untuk sembilan kelas. Hasil teratas ditampilkan beserta saran.</p></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <h2>Siap mencoba?</h2>
+    <a class="btn btn-primary btn-xl" href="#analisis" data-go="rec">Rekam tangisan sekarang</a>
+    <p class="disclaimer">Alat bantu edukasi, bukan alat diagnosis. Model hanya dilatih pada sekitar 860 rekaman dan bisa keliru, terutama untuk kelas yang datanya sedikit. Bila bayi menangis terus-menerus, demam, muntah, sulit bernapas, atau tampak lemas, segera hubungi tenaga kesehatan.</p>
+    <p class="credits">Data: <a href="https://www.kaggle.com/datasets/mennaahmed23/baby-crying-sounds-dataset">Baby Crying Sounds (Kaggle)</a>, berbasis donateacry-corpus dan ESC-50. Model: CNN log-mel, dibandingkan dengan baseline DTW. Tugas Analisis Data Lanjut.</p>
+  </footer>
+</main>
+</body>
+</html>

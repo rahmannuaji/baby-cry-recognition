@@ -1,0 +1,12 @@
+# Repo hanya berisi website GitHub Pages; semua yang lain (data, notebook, laporan .docx/.md,
+# model .pt, figures, plans, test) tetap lokal. Hapus baris "!..." yang relevan bila ingin ikut di-commit.
+/*
+!/.gitignore
+!/README.md
+!/docs/
+
+/docs/*
+!/docs/index.html
+!/docs/style.css
+!/docs/app.js
+!/docs/model.onnx
